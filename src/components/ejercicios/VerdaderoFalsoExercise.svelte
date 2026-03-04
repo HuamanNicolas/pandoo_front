@@ -1,38 +1,40 @@
 <script>
-  import { actividadesStore } from '../../stores/actividadesStore.svelte.js';
-  import { CheckCircle, XCircle } from 'lucide-svelte';
+  import { actividadesStore } from "../../stores/actividadesStore.svelte.js";
+  import { ArrowRight, CheckCircle, XCircle } from "lucide-svelte";
 
-  let { ejercicio, siguienteEjercicio } = $props();
+  let { ejercicio, siguienteEjercicio, hayMasEjercicios } = $props();
 
   const afirmaciones = ejercicio.metadata?.afirmaciones || [];
-  
+
   let respuestasUsuario = $state({});
   let verificado = $state(false);
-  
+
   let todasRespondidas = $derived.by(() => {
-    return afirmaciones.every((_, index) => respuestasUsuario[index] !== undefined);
-  });
-  
-  let todasCorrectas = $derived.by(() => {
-    if (!verificado) return false;
-    return afirmaciones.every((afirmacion, index) => 
-      respuestasUsuario[index] === afirmacion.respuesta
+    return afirmaciones.every(
+      (_, index) => respuestasUsuario[index] !== undefined,
     );
   });
-  
+
+  let todasCorrectas = $derived.by(() => {
+    if (!verificado) return false;
+    return afirmaciones.every(
+      (afirmacion, index) => respuestasUsuario[index] === afirmacion.respuesta,
+    );
+  });
+
   function seleccionarRespuesta(index, valor) {
     respuestasUsuario[index] = valor;
   }
-  
+
   function verificarRespuestas() {
     verificado = true;
-    
+
     if (todasCorrectas) {
       actividadesStore.respuestasCorrectas++;
       actividadesStore.ejerciciosCompletados.push(ejercicio.id);
     }
   }
-  
+
   function esCorrecta(index) {
     if (!verificado) return null;
     return respuestasUsuario[index] === afirmaciones[index].respuesta;
@@ -40,26 +42,28 @@
 </script>
 
 <div class="verdadero-falso-container">
-  
-
   <div class="afirmaciones-list">
     {#each afirmaciones as afirmacion, index}
-      <div 
-        class="afirmacion-item" 
-        class:correcta={esCorrecta(index) === true} 
+      <div
+        class="afirmacion-item"
+        class:correcta={esCorrecta(index) === true}
         class:incorrecta={esCorrecta(index) === false}
       >
         <div class="afirmacion-texto">
           <span class="numero">{index + 1}.</span>
           <p>{afirmacion.texto}</p>
         </div>
-        
+
         <div class="opciones">
           <button
             class="opcion verdadero"
             class:seleccionado={respuestasUsuario[index] === true}
-            class:correcto={verificado && afirmacion.respuesta === true && respuestasUsuario[index] === true}
-            class:incorrecto={verificado && respuestasUsuario[index] === true && afirmacion.respuesta !== true}
+            class:correcto={verificado &&
+              afirmacion.respuesta === true &&
+              respuestasUsuario[index] === true}
+            class:incorrecto={verificado &&
+              respuestasUsuario[index] === true &&
+              afirmacion.respuesta !== true}
             disabled={verificado}
             onclick={() => seleccionarRespuesta(index, true)}
           >
@@ -68,12 +72,16 @@
               <CheckCircle size={16} />
             {/if}
           </button>
-          
+
           <button
             class="opcion falso"
             class:seleccionado={respuestasUsuario[index] === false}
-            class:correcto={verificado && afirmacion.respuesta === false && respuestasUsuario[index] === false}
-            class:incorrecto={verificado && respuestasUsuario[index] === false && afirmacion.respuesta !== false}
+            class:correcto={verificado &&
+              afirmacion.respuesta === false &&
+              respuestasUsuario[index] === false}
+            class:incorrecto={verificado &&
+              respuestasUsuario[index] === false &&
+              afirmacion.respuesta !== false}
             disabled={verificado}
             onclick={() => seleccionarRespuesta(index, false)}
           >
@@ -88,7 +96,7 @@
   </div>
 
   {#if !verificado}
-    <button 
+    <button
       class="btn-verificar"
       disabled={!todasRespondidas}
       onclick={verificarRespuestas}
@@ -97,23 +105,21 @@
     </button>
   {:else}
     <div class="resultado">
-     
-        
-        <button class="btn-siguiente" onclick={siguienteEjercicio}>
-          Siguiente Ejercicio
-        </button>
-      
+      <button class="btn-siguiente" onclick={siguienteEjercicio}>
+        {hayMasEjercicios ? "Siguiente" : "Finalizar"}
+      </button>
     </div>
   {/if}
 </div>
 
 <style>
   .verdadero-falso-container {
-    max-width: 800px;
+    width: 100%;
     margin: 0 auto;
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
   }
-
 
   .afirmaciones-list {
     display: flex;
@@ -123,7 +129,7 @@
   }
 
   .afirmacion-item {
-    background:var(--dark-blue);
+    background: var(--dark-blue);
     border: 2px solid rgba(0, 255, 136, 0.3);
     border-radius: 12px;
     color: white;
@@ -133,19 +139,16 @@
 
   .afirmacion-item.correcta {
     border-color: #10b981;
-    
   }
 
   .afirmacion-item.incorrecta {
     border-color: #ef4444;
-   
   }
 
   .afirmacion-texto {
     display: flex;
     gap: 0.75rem;
     margin-bottom: 1rem;
-    
   }
 
   .numero {
@@ -187,12 +190,11 @@
 
   .opcion:hover:not(:disabled) {
     border-color: var(--electric-green);
-    
   }
 
   .opcion.seleccionado:not(.correcto):not(.incorrecto) {
     border-color: var(--electric-green);
-    
+
     color: var(--electric-green);
   }
 
@@ -204,7 +206,7 @@
 
   .opcion.incorrecto {
     border-color: #ef4444;
-    
+
     color: #991b1b;
   }
 
@@ -214,7 +216,6 @@
   }
 
   .btn-verificar {
-    width: 100%;
     padding: 1rem;
     background: var(--electric-green);
     color: var(--dark-blue);
@@ -224,10 +225,12 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    align-self: center !important;
+    min-width: 200px;
   }
 
   .btn-verificar:hover:not(:disabled) {
-     transform: translateY(-3px);
+    transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
   }
 
@@ -243,11 +246,10 @@
     align-items: center;
   }
 
-
   .btn-siguiente {
     padding: 0.75rem 2rem;
-    background: #10b981;
-    color: white;
+    background: var(--electric-green);
+    color: var(--dark-blue);
     border: none;
     border-radius: 8px;
     font-size: 1rem;
@@ -257,7 +259,7 @@
   }
 
   .btn-siguiente:hover {
-    background: #059669;
+    transform: scale(1.05);
   }
 
   @media (max-width: 640px) {

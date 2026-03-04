@@ -1,100 +1,102 @@
 <script>
-  import { actividadesStore } from '../../stores/actividadesStore.svelte.js';
-  import { CheckCircle, XCircle } from 'lucide-svelte';
+  import { actividadesStore } from "../../stores/actividadesStore.svelte.js";
+  import { ArrowRight, CheckCircle, XCircle } from "lucide-svelte";
 
-  let { ejercicio, siguienteEjercicio } = $props();
+  let { ejercicio, siguienteEjercicio, hayMasEjercicios } = $props();
 
-  const texto = ejercicio.metadata?.texto || '';
+  const texto = ejercicio.metadata?.texto || "";
   const blancos = ejercicio.metadata?.blancos || [];
   const todasLasOpciones = ejercicio.metadata?.opciones || [];
-  
 
   let opcionesDisponibles = $state([...todasLasOpciones]);
   let respuestasColocadas = $state({});
   let verificado = $state(false);
   let resultados = $state({});
-  
+
   let fragmentosTexto = $derived.by(() => {
     let partes = [];
     let textoRestante = texto;
     let match;
     const regex = /\{(\d+)\}/g;
     let lastIndex = 0;
-    
+
     while ((match = regex.exec(texto)) !== null) {
       if (match.index > lastIndex) {
         partes.push({
-          tipo: 'texto',
-          contenido: texto.substring(lastIndex, match.index)
+          tipo: "texto",
+          contenido: texto.substring(lastIndex, match.index),
         });
       }
-      
+
       partes.push({
-        tipo: 'blanco',
-        index: parseInt(match[1])
+        tipo: "blanco",
+        index: parseInt(match[1]),
       });
-      
+
       lastIndex = regex.lastIndex;
     }
-    
+
     if (lastIndex < texto.length) {
       partes.push({
-        tipo: 'texto',
-        contenido: texto.substring(lastIndex)
+        tipo: "texto",
+        contenido: texto.substring(lastIndex),
       });
     }
-    
+
     return partes;
   });
-  
+
   let todosLosBlancosLlenos = $derived.by(() => {
-    return blancos.every((_, index) => respuestasColocadas[index] !== undefined);
+    return blancos.every(
+      (_, index) => respuestasColocadas[index] !== undefined,
+    );
   });
-  
+
   let todasCorrectas = $derived.by(() => {
     if (!verificado) return false;
-    return blancos.every((blanco) => 
-      resultados[blanco.id] === true
-    );
+    return blancos.every((blanco) => resultados[blanco.id] === true);
   });
-  
+
   function seleccionarOpcion(opcion) {
     if (verificado) return;
-    
-    const primerBlancoLibre = blancos.find((blanco) => 
-      respuestasColocadas[blanco.id] === undefined
+
+    const primerBlancoLibre = blancos.find(
+      (blanco) => respuestasColocadas[blanco.id] === undefined,
     );
-    
+
     if (primerBlancoLibre) {
       respuestasColocadas[primerBlancoLibre.id] = opcion;
-      
-      opcionesDisponibles = opcionesDisponibles.filter(op => op.id !== opcion.id);
+
+      opcionesDisponibles = opcionesDisponibles.filter(
+        (op) => op.id !== opcion.id,
+      );
     }
   }
-  
+
   function quitarOpcion(blancoId) {
     if (verificado) return;
-    
+
     const opcion = respuestasColocadas[blancoId];
     if (opcion) {
       opcionesDisponibles = [...opcionesDisponibles, opcion];
-      
+
       delete respuestasColocadas[blancoId];
       respuestasColocadas = { ...respuestasColocadas };
     }
   }
-  
+
   function verificarRespuestas() {
     verificado = true;
-    
+
     let todasBien = true;
     blancos.forEach((blanco) => {
       const respuestaUsuario = respuestasColocadas[blanco.id];
-      const esCorrecta = respuestaUsuario?.label.toLowerCase().trim() === 
-                        blanco.respuestaCorrecta.toLowerCase().trim();
-      
+      const esCorrecta =
+        respuestaUsuario?.label.toLowerCase().trim() ===
+        blanco.respuestaCorrecta.toLowerCase().trim();
+
       resultados[blanco.id] = esCorrecta;
-      
+
       if (!esCorrecta) {
         todasBien = false;
       }
@@ -108,19 +110,18 @@
 </script>
 
 <div class="completar-texto-container">
-  
-
   <div class="texto-zona">
     <div class="texto-contenido">
       {#each fragmentosTexto as fragmento}
-        {#if fragmento.tipo === 'texto'}
+        {#if fragmento.tipo === "texto"}
           <span class="texto-normal">{fragmento.contenido}</span>
-        {:else if fragmento.tipo === 'blanco'}
+        {:else if fragmento.tipo === "blanco"}
           <button
             class="blanco"
             class:lleno={respuestasColocadas[fragmento.index] !== undefined}
             class:correcto={verificado && resultados[fragmento.index] === true}
-            class:incorrecto={verificado && resultados[fragmento.index] === false}
+            class:incorrecto={verificado &&
+              resultados[fragmento.index] === false}
             onclick={() => quitarOpcion(fragmento.index)}
             disabled={respuestasColocadas[fragmento.index] === undefined}
           >
@@ -151,29 +152,17 @@
   </div>
 
   {#if !verificado}
-    <button 
+    <button
       class="btn-verificar"
       disabled={!todosLosBlancosLlenos}
       onclick={verificarRespuestas}
     >
-      Comprobar
+      Verificar Respuestas
     </button>
   {:else}
     <div class="resultado">
-      {#if todasCorrectas}
-        <div class="mensaje-exito">
-          <CheckCircle size={24} />
-          <span>¡Excelente! Todas las respuestas son correctas</span>
-        </div>
-      {:else}
-        <div class="mensaje-error">
-          <XCircle size={24} />
-          <span>Algunas respuestas son incorrectas. Revisa los espacios marcados en rojo.</span>
-        </div>
-      {/if}
-      
       <button class="btn-siguiente" onclick={siguienteEjercicio}>
-        Siguiente Ejercicio
+        {hayMasEjercicios ? "Siguiente Ejercicio" : "Finalizar"}
       </button>
     </div>
   {/if}
@@ -181,7 +170,7 @@
 
 <style>
   .completar-texto-container {
-    max-width: 900px;
+    width: 100%;
     margin: 0 auto;
     padding: 2rem;
     display: flex;
@@ -190,7 +179,6 @@
   }
 
   .texto-zona {
-    
     border: 2px solid #e5e7eb;
     border-radius: 16px;
     padding: 2rem;
@@ -244,9 +232,9 @@
 
   .blanco.lleno {
     border-style: solid;
-    border-color: #6366f1;
-    background: #eef2ff;
-    color: #4f46e5;
+    border-color: var(--electric-green);
+    background: var(--electric-green);
+    color: var(--dark-blue);
   }
 
   .blanco.lleno:hover:not(:disabled) {
@@ -270,9 +258,16 @@
   }
 
   @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-5px);
+    }
+    75% {
+      transform: translateX(5px);
+    }
   }
 
   .blanco:disabled {
@@ -285,7 +280,6 @@
   }
 
   .opciones-zona {
-    
     border: 2px solid #e5e7eb;
     border-radius: 16px;
     padding: 1.5rem;
@@ -308,10 +302,10 @@
 
   .opcion-btn {
     padding: 0.75rem 1.5rem;
-    border: 2px solid #d1d5db;
+    border: 2px solid var(--electric-green);
     border-radius: 12px;
-    background: white;
-    color: #374151;
+    background: var(--electric-green);
+    color: var(--dark-blue);
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
@@ -331,9 +325,7 @@
   }
 
   .opcion-btn:hover:not(:disabled) {
-    border-color: #6366f1;
-    background: #eef2ff;
-    color: #4f46e5;
+    border-color: var(--electric-green);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
   }
@@ -348,7 +340,7 @@
   }
 
   .btn-verificar {
-    width: 100%;
+    min-width: 200px;
     padding: 1rem;
     color: var(--dark-blue);
     background: var(--electric-green);
@@ -358,11 +350,10 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    
+    align-self: center;
   }
 
   .btn-verificar:hover:not(:disabled) {
-    
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
   }
@@ -383,37 +374,10 @@
     align-items: center;
   }
 
-  .mensaje-exito,
-  .mensaje-error {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    animation: slideIn 0.3s ease-out;
-  }
-
-  .mensaje-exito {
-    background: #d1fae5;
-    color: #065f46;
-  }
-
-  .mensaje-error {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-
-  .mensaje-exito span,
-  .mensaje-error span {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 500;
-  }
-
   .btn-siguiente {
     padding: 0.75rem 2rem;
-    background: #10b981;
-    color: white;
+    background: var(--electric-green);
+    color: var(--dark-blue);
     border: none;
     border-radius: 12px;
     font-size: 1rem;
@@ -423,7 +387,6 @@
   }
 
   .btn-siguiente:hover {
-    background: #059669;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
   }
