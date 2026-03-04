@@ -161,7 +161,31 @@
         <ListChecks size={24} />
         Actividades del Curso
       </h3>
-
+      {#if !estaInscrito || inscribiendo}
+        <div class="inscription-section" id="inscription-section">
+          <div class="inscription-card">
+            <GraduationCap size={48} />
+            <h3>¿Listo para comenzar?</h3>
+            <p>
+              Inscríbete en este curso para acceder a todas las actividades y
+              comenzar tu aprendizaje.
+            </p>
+            <button
+              class="btn-inscribirse"
+              onclick={handleInscripcion}
+              disabled={inscribiendo}
+            >
+              {#if inscribiendo}
+                <Loader2 size={20} class="spinner-icon" />
+                Inscribiendo...
+              {:else}
+                <GraduationCap size={20} />
+                Inscribirse al Curso
+              {/if}
+            </button>
+          </div>
+        </div>
+      {/if}
       <div class="activities-list">
         {#if actividadesConProgreso.length === 0}
           <div class="empty-state">
@@ -217,32 +241,6 @@
           {/each}
         {/if}
       </div>
-
-      {#if !estaInscrito || inscribiendo}
-        <div class="inscription-section" id="inscription-section">
-          <div class="inscription-card">
-            <GraduationCap size={48} />
-            <h3>¿Listo para comenzar?</h3>
-            <p>
-              Inscríbete en este curso para acceder a todas las actividades y
-              comenzar tu aprendizaje.
-            </p>
-            <button
-              class="btn-inscribirse"
-              onclick={handleInscripcion}
-              disabled={inscribiendo}
-            >
-              {#if inscribiendo}
-                <Loader2 size={20} class="spinner-icon" />
-                Inscribiendo...
-              {:else}
-                <GraduationCap size={20} />
-                Inscribirse al Curso
-              {/if}
-            </button>
-          </div>
-        </div>
-      {/if}
     {:else}
       <div class="alert-custom">
         <AlertTriangle size={40} />
@@ -628,7 +626,7 @@
     );
     border: 2px solid rgba(0, 255, 136, 0.3);
     border-radius: 20px;
-    padding: 3rem;
+    padding: 1rem;
     max-width: 600px;
     text-align: center;
     animation: fadeIn 0.6s ease-out;

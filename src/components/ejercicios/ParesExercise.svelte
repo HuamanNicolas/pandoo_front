@@ -11,8 +11,19 @@
   let mostrandoError = $state(false);
   let todosResueltos = $state(false);
 
-  const itemsIzquierda = ejercicio.metadata.izquierda || [];
-  const itemsDerecha = ejercicio.metadata.derecha || [];
+  // Función para aleatorizar arrays (Fisher-Yates shuffle)
+  function shuffle(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  // Aleatorizar las columnas
+  const itemsIzquierda = shuffle(ejercicio.metadata.izquierda || []);
+  const itemsDerecha = shuffle(ejercicio.metadata.derecha || []);
   const paresCorrectos = ejercicio.metadata.paresCorrectos || {};
 
   itemsIzquierda.forEach((item) => {

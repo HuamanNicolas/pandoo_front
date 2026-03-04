@@ -638,6 +638,7 @@
                   </button>
                 </div>
               </div>
+              
             {:else}
               <div class="info-list">
                 <div class="info-item">
@@ -655,6 +656,20 @@
               </div>
             {/if}
           </div>
+          <div class="detail-card danger-zone">
+        <p class="danger-description">
+          Eliminar este curso es una acción permanente e irreversible. Se
+          eliminarán todas las actividades, ejercicios y datos asociados.
+        </p>
+        <button
+          class="btn-delete-curso"
+          onclick={eliminarCurso}
+          disabled={loading}
+        >
+          <Trash2 size={18} />
+          Eliminar Curso
+        </button>
+      </div>
         </div>
 
         <div class="details-sidebar">
@@ -784,20 +799,7 @@
         </div>
       </div>
 
-      <div class="detail-card danger-zone">
-        <p class="danger-description">
-          Eliminar este curso es una acción permanente e irreversible. Se
-          eliminarán todas las actividades, ejercicios y datos asociados.
-        </p>
-        <button
-          class="btn-delete-curso"
-          onclick={eliminarCurso}
-          disabled={loading}
-        >
-          <Trash2 size={18} />
-          Eliminar Curso
-        </button>
-      </div>
+      
     </div>
   {/if}
 </div>

@@ -14,6 +14,7 @@
     ChevronUp,
     ChevronDown,
     ArrowLeft,
+    AlertTriangle,
   } from "lucide-svelte";
   import { toast, Toaster } from "svelte-sonner";
   import {
@@ -30,6 +31,8 @@
   let editingUser = $state(null);
   let ordenColumna = $state(null);
   let ordenDireccion = $state("asc");
+  let showDeleteModal = $state(false);
+  let usuarioToDelete = $state({ id: null, nombre: "" });
 
   let formData = $state({
     nombre: "",
@@ -182,18 +185,25 @@
     loading = false;
   }
 
-  async function eliminarUsuario(userId, userName) {
-    if (!confirm(`¿Estás seguro de eliminar al usuario "${userName}"?`)) {
-      return;
-    }
+  function eliminarUsuario(userId, userName) {
+    usuarioToDelete = { id: userId, nombre: userName };
+    showDeleteModal = true;
+  }
 
+  function cancelarEliminacionUsuario() {
+    showDeleteModal = false;
+    usuarioToDelete = { id: null, nombre: "" };
+  }
+
+  async function confirmarEliminacionUsuario() {
+    showDeleteModal = false;
     loading = true;
-    const result = await deleteUser(userId);
+    const result = await deleteUser(usuarioToDelete.id);
 
     if (result.success) {
       await cargarUsuarios();
       toast.success("Usuario eliminado", {
-        description: `${userName} ha sido eliminado del sistema`,
+        description: `${usuarioToDelete.nombre} ha sido eliminado del sistema`,
       });
     } else {
       toast.error("Error al eliminar usuario", {
@@ -201,6 +211,7 @@
       });
     }
 
+    usuarioToDelete = { id: null, nombre: "" };
     loading = false;
   }
 
@@ -466,6 +477,75 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+{/if}
+
+{#if showDeleteModal}
+  <div
+    class="modal-overlay"
+    onclick={cancelarEliminacionUsuario}
+    onkeydown={(e) => e.key === "Escape" && cancelarEliminacionUsuario()}
+    role="button"
+    tabindex="0"
+    aria-label="Cerrar modal"
+  >
+    <div
+      class="modal-content modal-delete"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+    >
+      <div class="modal-delete-header">
+        <h2>Eliminar Usuario Permanentemente</h2>
+      </div>
+
+      <div class="modal-delete-content">
+        <p class="usuario-name">
+          ¿Estás ABSOLUTAMENTE SEGURO de eliminar <strong
+            >"{usuarioToDelete.nombre}"</strong
+          >?
+        </p>
+
+        <div class="warning-list">
+          <p class="warning-title">Esta acción:</p>
+          <ul>
+            <li>• Eliminará el usuario permanentemente</li>
+            <li>• Eliminará todo su progreso y datos</li>
+            <li>• <strong>NO ES REVERSIBLE</strong></li>
+          </ul>
+        </div>
+
+        <div class="confirmation-box">
+          <AlertTriangle size={20} />
+          <p>
+            Esta decisión no se puede deshacer. Todos los datos del usuario se
+            perderán para siempre.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-delete-actions">
+        <button
+          type="button"
+          class="btn-cancel-delete"
+          onclick={cancelarEliminacionUsuario}
+        >
+          <X size={18} />
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn-confirm-delete"
+          onclick={confirmarEliminacionUsuario}
+          disabled={loading}
+        >
+          <Trash2 size={18} />
+          {loading ? "Eliminando..." : "Sí, Eliminar"}
+        </button>
+      </div>
     </div>
   </div>
 {/if}
@@ -903,5 +983,148 @@
       width: 100%;
       padding: 0.9rem;
     }
+
+    .modal-delete-actions {
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .btn-cancel-delete,
+    .btn-confirm-delete {
+      width: 100%;
+    }
+  }
+
+  .modal-delete {
+    max-width: 600px;
+    border: 2px solid rgba(239, 68, 68, 0.5);
+  }
+
+  .modal-delete-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .modal-delete-header :global(svg) {
+    color: #ef4444;
+    filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5));
+  }
+
+  .modal-delete-header h2 {
+    color: #ef4444;
+    margin: 0;
+    text-align: center;
+    font-size: 1.5rem;
+  }
+
+  .modal-delete-content {
+    margin-bottom: 2rem;
+  }
+
+  .modal-delete-content p {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+  }
+
+  .modal-delete-content strong {
+    color: #00ff88;
+    font-weight: 600;
+  }
+
+  .warning-list {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .warning-list li {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .warning-list li:last-child {
+    margin-bottom: 0;
+  }
+
+  .confirmation-box {
+    background: rgba(239, 68, 68, 0.15);
+    border: 2px solid rgba(239, 68, 68, 0.4);
+    border-radius: 10px;
+    padding: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .confirmation-box :global(svg) {
+    color: #ef4444;
+    flex-shrink: 0;
+  }
+
+  .confirmation-box p {
+    color: #fff;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .modal-delete-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .btn-cancel-delete,
+  .btn-confirm-delete {
+    flex: 1;
+    padding: 0.9rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-cancel-delete {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-cancel-delete:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .btn-confirm-delete {
+    background: linear-gradient(45deg, #ef4444, #dc2626);
+    color: #fff;
+    border: 2px solid transparent;
+  }
+
+  .btn-confirm-delete:hover:not(:disabled) {
+    background: linear-gradient(45deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+  }
+
+  .btn-confirm-delete:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 </style>
